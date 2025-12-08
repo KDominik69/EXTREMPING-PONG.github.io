@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ping-Pong Játék</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            width: 100%;
+            padding: 10px;
+        }
+        
+        h1 {
+            color: white;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+        }
+        
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .game-wrapper {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+        
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background-color: #000;
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .mobile-controls {
+            display: none;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        @media (max-width: 767px) {
+            .mobile-controls {
+                display: block;
+            }
+        }
+        
+        .mobile-controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .mobile-controls-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .mobile-controls-column h4 {
+            color: white;
+            margin-bottom: 5px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .mobile-btn {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.1s;
+            width: 100%;
+            min-height: 60px;
+            touch-action: manipulation;
+        }
+        
+        .mobile-btn:active {
+            transform: scale(0.95);
+            background-color: rgba(200, 200, 200, 0.9);
+        }
+        
+        .controls {
+            background-color: rgba(255, 255, 255, 0.97);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        @media (min-width: 768px) {
+            .controls {
+                position: sticky;
+                top: 20px;
+            }
+        }
+        
+        .controls h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #1a2a6c 0%, #2575fc 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .player-score {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .player-score span {
+            display: block;
+            font-size: 2.2rem;
+        }
+        
+        .control-item {
+            margin-bottom: 15px;
+        }
+        
+        .control-item h3 {
+            color: #444;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .theme-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        @media (min-width: 480px) {
+            .theme-buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .theme-btn {
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .theme-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .theme-btn.active {
+            transform: scale(0.98);
+            border-color: #333;
+        }
+        
+        .theme-classic {
+            background-color: #000;
+            color: white;
+        }
+        
+        .theme-neon {
+            background-color: #0ff;
+            color: #000;
+        }
+        
+        .theme-retro {
+            background-color: #ff6b6b;
+            color: #fff;
+        }
+        
+        .theme-space {
+            background-color: #1a1a2e;
+            color: #4cc9f0;
+        }
+        
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 480px) {
+            .control-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
+        
+        .control-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: white;
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.97);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .instructions h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+        
+        .instructions p {
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .instructions ul {
+            color: #555;
+            margin-left: 20px;
+            font-size: 1rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>Ping-Pong Játék</h1>
+            <p class="subtitle">Kattints a "Játék indítása" gombra, és kezdődhet a játék!</p>
+        </div>
+        
+        <div class="game-wrapper">
+            <div class="game-area">
+                <div class="canvas-container">
+                    <canvas id="gameCanvas"></canvas>
+                </div>
+                
+                <div class="mobile-controls">
+                    <div class="mobile-controls-grid">
+                        <div class="mobile-controls-column">
+                            <h4>Játékos 1</h4>
+                            <button class="mobile-btn" id="p1UpBtn">W</button>
+                            <button class="mobile-btn" id="p1DownBtn">S</button>
+                        </div>
+                        <div class="mobile-controls-column">
+                            <h4>Játékos 2</h4>
+                            <button class="mobile-btn" id="p2UpBtn">↑</button>
+                            <button class="mobile-btn" id="p2DownBtn">↓</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h2>Játékvezérlés</h2>
+                
+                <div class="score-board">
+                    <div class="player-score">
+                        Játékos 1<br>
+                        <span id="player1Score">0</span>
+                    </div>
+                    <div class="player-score">
+                        Játékos 2<br>
+                        <span id="player2Score">0</span>
+                    </div>
+                </div>
+                
+                <div class="control-item">
+                    <h3>Kinézet választása</h3>
+                    <div class="theme-buttons">
+                        <button class="theme-btn theme-classic active" id="themeClassic">Klasszikus</button>
+                        <button class="theme-btn theme-neon" id="themeNeon">Neon</button>
+                        <button class="theme-btn theme-retro" id="themeRetro">Retro</button>
+                        <button class="theme-btn theme-space" id="themeSpace">Űr</button>
+                    </div>
+                </div>
+                
+                <div class="control-item">
+                    <h3>Nehézség</h3>
+                    <select id="difficulty">
+                        <option value="easy">Könnyű</option>
+                        <option value="medium" selected>Közepes</option>
+                        <option value="hard">Nehéz</option>
+                        <option value="extreme">Extrém</option>
+                    </select>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="control-btn start-btn" id="startBtn">Játék indítása</button>
+                    <button class="control-btn reset-btn" id="resetBtn">Visszaállítás</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>Játékutasítások</h2>
+            <p><strong>Cél:</strong> Üss vissza a labdát az ellenfél pályájára, és szerezz pontot!</p>
+            <ul>
+                <li><strong>Játékos 1 (bal oldali)</strong>: W és S billentyűk</li>
+                <li><strong>Játékos 2 (jobb oldali)</strong>: Fel és Le nyilak</li>
+                <li>A labda minden ütéstől gyorsabb lesz</li>
+                <li>A játék 10 pontig tart</li>
+                <li><strong>Szünet:</strong> SPACE billentyű</li>
+                <li><strong>MOBILON:</strong> Használd a képernyő alján lévő gombokat!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // === VÁLTOZÓK ===
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Játékállapot
+        let gameRunning = false;
+        let gamePaused = false;
+        let player1Score = 0;
+        let player2Score = 0;
+        let winningScore = 10;
+        let lastTime = 0;
+        let animationId = null;
+        
+        // Játékobjektumok (értékek a resize-ban lesznek beállítva)
+        let paddleWidth = 0;
+        let paddleHeight = 0;
+        let player1Y = 0;
+        let player2Y = 0;
+        let paddleSpeed = 0;
+        
+        // Labda
+        let ballX = 0;
+        let ballY = 0;
+        let ballSpeedX = 0;
+        let ballSpeedY = 0;
+        let ballSize = 0;
+        
+        // Kinézet
+        let currentTheme = 'classic';
+        
+        // Billentyűzet állapot
+        const keys = {
+            w: false,
+            s: false,
+            ArrowUp: false,
+            ArrowDown: false
+        };
+        
+        // Nehézség beállítások
+        const difficultySettings = {
+            easy: { paddleSpeed: 5, ballSpeed: 4 },
+            medium: { paddleSpeed: 6, ballSpeed: 5 },
+            hard: { paddleSpeed: 7, ballSpeed: 6 },
+            extreme: { paddleSpeed: 8, ballSpeed: 7 }
+        };
+        
+        // === DOM ELEMEK ===
+        const elements = {
+            player1Score: document.getElementById('player1Score'),
+            player2Score: document.getElementById('player2Score'),
+            startBtn: document.getElementById('startBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            difficulty: document.getElementById('difficulty'),
+            themeClassic: document.getElementById('themeClassic'),
+            themeNeon: document.getElementById('themeNeon'),
+            themeRetro: document.getElementById('themeRetro'),
+            themeSpace: document.getElementById('themeSpace'),
+            p1UpBtn: document.getElementById('p1UpBtn'),
+            p1DownBtn: document.getElementById('p1DownBtn'),
+            p2UpBtn: document.getElementById('p2UpBtn'),
+            p2DownBtn: document.getElementById('p2DownBtn')
+        };
+        
+        // === CANVAS MÉRETEZÉS ===
+        function resizeCanvas() {
+            const container = document.querySelector('.canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Méretek beállítása
+            paddleWidth = Math.max(10, canvas.width * 0.015);
+            paddleHeight = Math.max(60, canvas.height * 0.2);
+            ballSize = Math.max(8, canvas.width * 0.015);
+            
+            // Kezdeti pozíciók
+            player1Y = canvas.height / 2 - paddleHeight / 2;
+            player2Y = canvas.height / 2 - paddleHeight / 2;
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            
+            // Nehézség alkalmazása
+            applyDifficulty(elements.difficulty.value);
+            
+            // Újrarajzolás
+            draw();
+        }
+        
+        // === NEHÉZSÉG ALKALMAZÁSA ===
+        function applyDifficulty(difficulty) {
+            const settings = difficultySettings[difficulty];
+            paddleSpeed = settings.paddleSpeed;
+            const baseSpeed = settings.ballSpeed;
+            
+            // Csak akkor állítsuk be a labda sebességét, ha még nincs beállítva
+            if (ballSpeedX === 0) {
+                ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseSpeed;
+                ballSpeedY = (Math.random() * 2 - 1) * 2;
+            }
+        }
+        
+        // === LABDA VISSZAÁLLÍTÁSA ===
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            
+            const currentDifficulty = elements.difficulty.value;
+            const baseSpeed = difficultySettings[currentDifficulty].ballSpeed;
+            ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseSpeed;
+            ballSpeedY = (Math.random() * 2 - 1) * 2;
+        }
+        
+        // === PONTSZÁM FRISSÍTÉSE ===
+        function updateScoreDisplay() {
+            elements.player1Score.textContent = player1Score;
+            elements.player2Score.textContent = player2Score;
+        }
+        
+        // === RAJZOLÁS ===
+        function draw() {
+            // Háttér
+            ctx.fillStyle = getThemeColor('background');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Középső vonal
+            ctx.strokeStyle = getThemeColor('centerLine');
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Ütők
+            const paddleOffset = canvas.width * 0.03;
+            
+            ctx.fillStyle = getThemeColor('paddle1');
+            ctx.fillRect(paddleOffset, player1Y, paddleWidth, paddleHeight);
+            
+            ctx.fillStyle = getThemeColor('paddle2');
+            ctx.fillRect(canvas.width - paddleOffset - paddleWidth, player2Y, paddleWidth, paddleHeight);
+            
+            // Labda
+            ctx.fillStyle = getThemeColor('ball');
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Téma effektek
+            drawThemeDecorations();
+            
+            // Szünet üzenet
+            if (gamePaused && gameRunning) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('SZÜNET', canvas.width / 2, canvas.height / 2 - 30);
+                
+                ctx.font = '20px Arial';
+                ctx.fillText('Nyomj SPACE-t a folytatáshoz', canvas.width / 2, canvas.height / 2 + 30);
+            }
+            
+            // Győzelem üzenet
+            if (player1Score >= winningScore || player2Score >= winningScore) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const winner = player1Score >= winningScore ? 1 : 2;
+                ctx.fillStyle = winner === 1 ? getThemeColor('paddle1') : getThemeColor('paddle2');
+                ctx.font = 'bold 42px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`JÁTÉKOS ${winner} NYERT!`, canvas.width / 2, canvas.height / 2 - 40);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '24px Arial';
+                ctx.fillText(`Eredmény: ${player1Score} - ${player2Score}`, canvas.width / 2, canvas.height / 2);
+                ctx.fillText('Nyomj az "Új játék" gombra', canvas.width / 2, canvas.height / 2 + 40);
+            }
+        }
+        
+        // === TÉMA SZÍNEK ===
+        function getThemeColor(element) {
+            const themes = {
+                classic: {
+                    background: '#000',
+                    centerLine: '#fff',
+                    paddle1: '#fff',
+                    paddle2: '#fff',
+                    ball: '#fff'
+                },
+                neon: {
+                    background: '#000',
+                    centerLine: '#0ff',
+                    paddle1: '#f0f',
+                    paddle2: '#0ff',
+                    ball: '#ff0'
+                },
+                retro: {
+                    background: '#0a0a0a',
+                    centerLine: '#ff6b6b',
+                    paddle1: '#4ecdc4',
+                    paddle2: '#ff6b6b',
+                    ball: '#ffe66d'
+                },
+                space: {
+                    background: '#0d1b2a',
+                    centerLine: '#4cc9f0',
+                    paddle1: '#4361ee',
+                    paddle2: '#f72585',
+                    ball: '#4cc9f0'
+                }
+            };
+            return themes[currentTheme][element];
+        }
+        
+        // === TÉMA DEKORÁCIÓK ===
+        function drawThemeDecorations() {
+            if (currentTheme === 'space') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                for (let i = 0; i < 20; i++) {
+                    const x = (i * 40) % canvas.width;
+                    const y = (i * 30) % canvas.height;
+                    const size = Math.random() * 2 + 1;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (currentTheme === 'neon') {
+                ctx.shadowColor = getThemeColor('ball');
+                ctx.shadowBlur = 20;
+                ctx.fillStyle = getThemeColor('ball');
+                ctx.beginPath();
+                ctx.arc(ballX, ballY, ballSize, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        // === JÁTÉK FRISSÍTÉSE ===
+        function update() {
+            if (!gameRunning || gamePaused) return;
+            
+            const paddleOffset = canvas.width * 0.03;
+            
+            // Játékos 1 mozgatása
+            if (keys.w && player1Y > 0) {
+                player1Y -= paddleSpeed;
+            }
+            if (keys.s && player1Y < canvas.height - paddleHeight) {
+                player1Y += paddleSpeed;
+            }
+            
+            // Játékos 2 mozgatása
+            if (keys.ArrowUp && player2Y > 0) {
+                player2Y -= paddleSpeed;
+            }
+            if (keys.ArrowDown && player2Y < canvas.height - paddleHeight) {
+                player2Y += paddleSpeed;
+            }
+            
+            // Labda mozgatása
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+            
+            // FAL ÜTKÖZÉS (fel és le)
+            if (ballY < ballSize) {
+                ballY = ballSize;
+                ballSpeedY = -ballSpeedY;
+            }
+            if (ballY > canvas.height - ballSize) {
+                ballY = canvas.height - ballSize;
+                ballSpeedY = -ballSpeedY;
+            }
+            
+            // BAL ÜTŐ ÜTKÖZÉS
+            if (ballX - ballSize < paddleOffset + paddleWidth && 
+                ballX > paddleOffset &&
+                ballY > player1Y && 
+                ballY < player1Y + paddleHeight) {
+                
+                // Ütközés pozíciója a ütőn
+                const hitPosition = (ballY - (player1Y + paddleHeight / 2)) / (paddleHeight / 2);
+                
+                // Sebesség változtatása
+                ballSpeedX = Math.abs(ballSpeedX) * 1.05;
+                ballSpeedY = hitPosition * 6;
+                
+                // Pozíció korrekció
+                ballX = paddleOffset + paddleWidth + ballSize;
+            }
+            
+            // JOBB ÜTŐ ÜTKÖZÉS
+            if (ballX + ballSize > canvas.width - paddleOffset - paddleWidth && 
+                ballX < canvas.width - paddleOffset &&
+                ballY > player2Y && 
+                ballY < player2Y + paddleHeight) {
+                
+                // Ütközés pozíciója a ütőn
+                const hitPosition = (ballY - (player2Y + paddleHeight / 2)) / (paddleHeight / 2);
+                
+                // Sebesség változtatása
+                ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
+                ballSpeedY = hitPosition * 6;
+                
+                // Pozíció korrekció
+                ballX = canvas.width - paddleOffset - paddleWidth - ballSize;
+            }
+            
+            // PONTSZÁMÍTÁS
+            if (ballX < 0) {
+                // Jobb oldal pontot kap
+                player2Score++;
+                updateScoreDisplay();
+                
+                if (player2Score >= winningScore) {
+                    // Játék vége
+                    gameRunning = false;
+                    elements.startBtn.textContent = 'Új játék';
+                    draw();
+                } else {
+                    // Új labda
+                    resetBall();
+                }
+            }
+            
+            if (ballX > canvas.width) {
+                // Bal oldal pontot kap
+                player1Score++;
+                updateScoreDisplay();
+                
+                if (player1Score >= winningScore) {
+                    // Játék vége
+                    gameRunning = false;
+                    elements.startBtn.textContent = 'Új játék';
+                    draw();
+                } else {
+                    // Új labda
+                    resetBall();
+                }
+            }
+        }
+        
+        // === JÁTÉKCIKLUS ===
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            
+            // Csak minden 16ms-ban frissítünk (~60 FPS)
+            if (deltaTime > 16) {
+                update();
+                draw();
+                lastTime = timestamp;
+            }
+            
+            if (gameRunning && !gamePaused) {
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // === JÁTÉK INDÍTÁSA ===
+        function startGame() {
+            if (gameRunning) {
+                // Ha már fut a játék, szüneteltetjük
+                gamePaused = !gamePaused;
+                elements.startBtn.textContent = gamePaused ? 'Folytatás' : 'Szünet';
+                
+                if (!gamePaused) {
+                    // Folytatás
+                    lastTime = 0;
+                    animationId = requestAnimationFrame(gameLoop);
+                } else {
+                    // Szünet
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                        animationId = null;
+                    }
+                    draw(); // Szünet üzenet megjelenítése
+                }
+            } else {
+                // Új játék indítása
+                gameRunning = true;
+                gamePaused = false;
+                elements.startBtn.textContent = 'Szünet';
+                
+                // Ha vége volt a játéknak, alaphelyzetbe állítjuk
+                if (player1Score >= winningScore || player2Score >= winningScore) {
+                    player1Score = 0;
+                    player2Score = 0;
+                    updateScoreDisplay();
+                }
+                
+                // Labda alaphelyzetbe
+                resetBall();
+                
+                // Játékciklus indítása
+                lastTime = 0;
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // === JÁTÉK VISSZAÁLLÍTÁSA ===
+        function resetGame() {
+            gameRunning = false;
+            gamePaused = false;
+            player1Score = 0;
+            player2Score = 0;
+            
+            elements.startBtn.textContent = 'Játék indítása';
+            updateScoreDisplay();
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            // Újrarajzolás
+            resizeCanvas();
+        }
+        
+        // === ESEMÉNYKEZELŐK BEÁLLÍTÁSA ===
+        function setupEventListeners() {
+            // Ablak átméretezés
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Játék indítása
+            elements.startBtn.addEventListener('click', startGame);
+            
+            // Visszaállítás
+            elements.resetBtn.addEventListener('click', resetGame);
+            
+            // Nehézség változtatása
+            elements.difficulty.addEventListener('change', function() {
+                applyDifficulty(this.value);
+                if (gameRunning) {
+                    resetBall();
+                }
+            });
+            
+            // Téma választás
+            elements.themeClassic.addEventListener('click', () => {
+                currentTheme = 'classic';
+                updateThemeButtons();
+                draw();
+            });
+            
+            elements.themeNeon.addEventListener('click', () => {
+                currentTheme = 'neon';
+                updateThemeButtons();
+                draw();
+            });
+            
+            elements.themeRetro.addEventListener('click', () => {
+                currentTheme = 'retro';
+                updateThemeButtons();
+                draw();
+            });
+            
+            elements.themeSpace.addEventListener('click', () => {
+                currentTheme = 'space';
+                updateThemeButtons();
+                draw();
+            });
+            
+            // Billentyűzet események
+            document.addEventListener('keydown', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                    e.preventDefault();
+                }
+                
+                // SPACE - szünet
+                if (e.key === ' ' && gameRunning) {
+                    gamePaused = !gamePaused;
+                    elements.startBtn.textContent = gamePaused ? 'Folytatás' : 'Szünet';
+                    e.preventDefault();
+                    
+                    if (!gamePaused) {
+                        // Folytatás
+                        lastTime = 0;
+                        animationId = requestAnimationFrame(gameLoop);
+                    } else {
+                        // Szünet - üzenet megjelenítése
+                        draw();
+                    }
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = false;
+                }
+            });
+            
+            // Mobil gombok
+            function setupMobileButton(btn, key) {
+                const startPress = (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                };
+                
+                const endPress = (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                };
+                
+                btn.addEventListener('mousedown', startPress);
+                btn.addEventListener('touchstart', startPress);
+                btn.addEventListener('mouseup', endPress);
+                btn.addEventListener('touchend', endPress);
+                btn.addEventListener('touchcancel', endPress);
+                btn.addEventListener('mouseleave', endPress);
+            }
+            
+            setupMobileButton(elements.p1UpBtn, 'w');
+            setupMobileButton(elements.p1DownBtn, 's');
+            setupMobileButton(elements.p2UpBtn, 'ArrowUp');
+            setupMobileButton(elements.p2DownBtn, 'ArrowDown');
+            
+            // Touch események a canvasen
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+        
+        // === TÉMA GOMBOK FRISSÍTÉSE ===
+        function updateThemeButtons() {
+            const buttons = [elements.themeClassic, elements.themeNeon, elements.themeRetro, elements.themeSpace];
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            switch(currentTheme) {
+                case 'classic':
+                    elements.themeClassic.classList.add('active');
+                    break;
+                case 'neon':
+                    elements.themeNeon.classList.add('active');
+                    break;
+                case 'retro':
+                    elements.themeRetro.classList.add('active');
+                    break;
+                case 'space':
+                    elements.themeSpace.classList.add('active');
+                    break;
+            }
+        }
+        
+        // === INICIALIZÁLÁS ===
+        function init() {
+            resizeCanvas();
+            setupEventListeners();
+            updateScoreDisplay();
+            updateThemeButtons();
+            draw();
+        }
+        
+        // === OLDAL BETÖLTÉSE ===
+        window.addEventListener('load', init);
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
